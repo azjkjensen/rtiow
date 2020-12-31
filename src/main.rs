@@ -1,31 +1,29 @@
+mod camera;
+mod hittable;
+mod hittable_list;
 mod ray;
+mod sphere;
+mod util;
 mod vec3;
+
+use camera::Camera;
+use hittable::HitRecord;
+use hittable_list::HittableList;
 use indicatif::ProgressBar;
+use rand::random;
 use ray::Ray;
+use sphere::Sphere;
+use std::rc::Rc;
 use vec3::{Color, Point3, Vec3};
 
-fn ray_color(ray: &Ray) -> Color {
-    let t = hit_sphere(&Point3::new_init(0.0, 0.0, -1.0), 0.5, ray);
-    if t > 0.0 {
-        let normal = (ray.at(t) - Vec3::new_init(0.0, 0.0, -1.0)).unit_vector();
-        Color::new_init(normal.x() + 1.0, normal.y() + 1.0, normal.z() + 1.0) * 0.5
+fn ray_color(ray: &Ray, world: &HittableList) -> Color {
+    let mut record = HitRecord::new();
+    if world.hit(&ray, 0.0, f64::INFINITY, &mut record) {
+        (record.normal + Color::new_init(1.0, 1.0, 1.0)) * 0.5
     } else {
         let unit_direction = ray.dir.unit_vector();
         let t = 0.5 * (unit_direction.y() + 1.0);
         Color::new_init(1.0, 1.0, 1.0) * (1.0 - t) + Color::new_init(0.5, 0.7, 1.0) * t
-    }
-}
-
-fn hit_sphere(center: &Point3, radius: f64, ray: &Ray) -> f64 {
-    let oc = ray.origin - *center;
-    let a = ray.dir.dot(&ray.dir);
-    let b = oc.dot(&ray.dir) * 2.0;
-    let c = oc.dot(&oc) - radius.powf(2.0);
-    let discriminant = b * b - a * c * 4.0;
-    if discriminant < 0.0 {
-        -1.0
-    } else {
-        (-b - discriminant.sqrt()) / (a * 2.0)
     }
 }
 
@@ -34,17 +32,21 @@ fn main() {
     let aspect_ratio = 16.0 / 9.0;
     let image_width: u64 = 400;
     let image_height: u64 = (image_width as f64 / aspect_ratio) as u64;
+    let samples_per_pixel = 100;
+
+    // world
+    let mut world = HittableList::new();
+    world.add(Rc::new(Sphere::new_init(
+        Point3::new_init(0.0, 0.0, -1.0),
+        0.5,
+    )));
+    world.add(Rc::new(Sphere::new_init(
+        Point3::new_init(0.0, -100.5, -1.0),
+        100.0,
+    )));
 
     // camera
-    let viewport_height = 2.0;
-    let viewport_width = aspect_ratio * viewport_height;
-    let focal_length = 1.0;
-
-    let origin = Point3::new();
-    let horizontal = Vec3::new_init(viewport_width, 0.0, 0.0);
-    let vertical = Vec3::new_init(0.0, viewport_height, 0.0);
-    let lower_left_corner =
-        origin - horizontal / 2.0 - vertical / 2.0 - Vec3::new_init(0.0, 0.0, focal_length);
+    let cam = Camera::new();
 
     // render
     let progress_bar = ProgressBar::new(image_height);
@@ -52,15 +54,29 @@ fn main() {
     for j in (0..image_height).rev() {
         progress_bar.inc(1);
         for i in 0..image_width {
-            let u = i as f64 / (image_width - 1) as f64;
-            let v = j as f64 / (image_height - 1) as f64;
-            let r = Ray::new_init(
-                origin,
-                lower_left_corner + horizontal * u + vertical * v - origin,
+            let mut pixel_color = Color::new();
+            for _ in 0..samples_per_pixel {
+                let u = (i as f64 + random::<f64>()) / (image_width - 1) as f64;
+                let v = (j as f64 + random::<f64>()) / (image_height - 1) as f64;
+                let ray = cam.get_ray(u, v);
+                pixel_color += ray_color(&ray, &world);
+                //eprintln!("adding {:?}", pixel_color);
+            }
+            out = format!(
+                "{}{}",
+                out,
+                pixel_color.as_multisample_color_str(samples_per_pixel)
             );
-            let pixel_color = ray_color(&r);
 
-            out = format!("{}{}", out, pixel_color.as_color_str());
+            //let u = i as f64 / (image_width - 1) as f64;
+            //let v = j as f64 / (image_height - 1) as f64;
+            //let r = Ray::new_init(
+            //    origin,
+            //    lower_left_corner + horizontal * u + vertical * v - origin,
+            //);
+            //let pixel_color = ray_color(&r, &world);
+
+            //out = format!("{}{}", out, pixel_color.as_color_str());
         }
     }
     progress_bar.finish();

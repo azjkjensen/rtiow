@@ -1,3 +1,4 @@
+use crate::util::clamp;
 use std::fmt::Display;
 use std::ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub};
 
@@ -52,7 +53,7 @@ impl Vec3 {
     }
 
     pub fn unit_vector(&self) -> Vec3 {
-        self.clone() / self.len()
+        *self / self.len()
     }
 
     pub fn as_color_str(&self) -> String {
@@ -61,6 +62,24 @@ impl Vec3 {
             (255.999 * self[0]) as u8,
             (255.999 * self[1]) as u8,
             (255.999 * self[2]) as u8
+        )
+    }
+
+    pub fn as_multisample_color_str(&self, samples_per_pixel: u32) -> String {
+        let mut r = self.x();
+        let mut g = self.y();
+        let mut b = self.z();
+
+        // scale to a single pixel
+        let scale = 1.0 / (samples_per_pixel as f64);
+        r *= scale;
+        g *= scale;
+        b *= scale;
+        format!(
+            "{} {} {}\n",
+            (256.0 * clamp(r, 0.0, 0.999)) as u8,
+            (256.0 * clamp(g, 0.0, 0.999)) as u8,
+            (256.0 * clamp(b, 0.0, 0.999)) as u8
         )
     }
 }
