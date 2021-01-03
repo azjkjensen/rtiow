@@ -1,4 +1,5 @@
-use crate::util::clamp;
+use crate::util::{clamp, random_in_range};
+use rand::random;
 use std::fmt::Display;
 use std::ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub};
 
@@ -18,6 +19,37 @@ impl Vec3 {
 
     pub fn new_init(e0: f64, e1: f64, e2: f64) -> Self {
         Vec3 { e: [e0, e1, e2] }
+    }
+
+    pub fn random() -> Self {
+        Self {
+            e: [random(), random(), random()],
+        }
+    }
+
+    pub fn random_in_range(min: f64, max: f64) -> Self {
+        Self {
+            e: [
+                random_in_range(min, max),
+                random_in_range(min, max),
+                random_in_range(min, max),
+            ],
+        }
+    }
+
+    pub fn random_in_unit_sphere() -> Self {
+        let mut v: Self;
+        loop {
+            v = Self::random_in_range(-1.0, 1.0);
+            if v.len_squared() < 1.0 {
+                break;
+            }
+        }
+        v
+    }
+
+    pub fn random_unit_vector() -> Self {
+        Self::random_in_unit_sphere().unit_vector()
     }
 
     pub fn x(&self) -> f64 {
@@ -56,13 +88,13 @@ impl Vec3 {
         *self / self.len()
     }
 
-    pub fn as_color_str(&self) -> String {
-        format!(
-            "{} {} {}\n",
-            (255.999 * self[0]) as u8,
-            (255.999 * self[1]) as u8,
-            (255.999 * self[2]) as u8
-        )
+    pub fn near_zero(&self) -> bool {
+        let s = 1e-8;
+        self.e[0].abs() < s && self.e[1].abs() < s && self.e[2].abs() < s
+    }
+
+    pub fn reflect(&self, n: &Vec3) -> Vec3 {
+        *self - *n * self.dot(n) * 2.0
     }
 
     pub fn as_multisample_color_str(&self, samples_per_pixel: u32) -> String {
@@ -72,9 +104,9 @@ impl Vec3 {
 
         // scale to a single pixel
         let scale = 1.0 / (samples_per_pixel as f64);
-        r *= scale;
-        g *= scale;
-        b *= scale;
+        r = (r * scale).sqrt();
+        g = (g * scale).sqrt();
+        b = (b * scale).sqrt();
         format!(
             "{} {} {}\n",
             (256.0 * clamp(r, 0.0, 0.999)) as u8,

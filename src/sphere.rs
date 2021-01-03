@@ -1,10 +1,12 @@
 use crate::hittable::{HitRecord, Hittable};
+use crate::material::Material;
 use crate::ray::Ray;
-use crate::vec3::Point3;
+use crate::vec3::{Color, Point3};
 
 pub struct Sphere {
     center: Point3,
     radius: f64,
+    material: Material,
 }
 
 impl Sphere {
@@ -12,11 +14,18 @@ impl Sphere {
         Self {
             center: Point3::new(),
             radius: 0.0,
+            material: Material::Lambertian {
+                albedo: Color::new(),
+            },
         }
     }
 
-    pub fn new_init(center: Point3, radius: f64) -> Self {
-        Self { center, radius }
+    pub fn new_init(center: Point3, radius: f64, material: Material) -> Self {
+        Self {
+            center,
+            radius,
+            material,
+        }
     }
 }
 
@@ -43,6 +52,7 @@ impl Hittable for Sphere {
             record.p = ray.at(record.t);
             let outward_normal = (record.p - self.center) / self.radius;
             record.set_face_normal(&ray, &outward_normal);
+            record.material = self.material.clone();
             true
         }
     }

@@ -1,10 +1,10 @@
 use crate::hittable::{HitRecord, Hittable};
 use crate::ray::Ray;
 use std::collections::VecDeque;
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub struct HittableList {
-    objects: VecDeque<Rc<dyn Hittable>>,
+    objects: VecDeque<Arc<dyn Hittable + Sync + Send>>,
 }
 
 impl HittableList {
@@ -14,7 +14,7 @@ impl HittableList {
         }
     }
 
-    pub fn new_init(object: Rc<dyn Hittable>) -> HittableList {
+    pub fn new_init(object: Arc<dyn Hittable + Sync + Send>) -> HittableList {
         let mut objects = VecDeque::new();
         objects.push_back(object);
         Self { objects }
@@ -24,7 +24,7 @@ impl HittableList {
         self.objects.clear()
     }
 
-    pub fn add(&mut self, object: Rc<dyn Hittable>) {
+    pub fn add(&mut self, object: Arc<dyn Hittable + Sync + Send>) {
         self.objects.push_back(object)
     }
 
