@@ -1,6 +1,4 @@
-use crate::ray::Ray;
-use crate::util::degrees_to_rads;
-use crate::vec3::{Point3, Vec3};
+use crate::euclidean::{degrees_to_rads, Point3, Ray, Vec3};
 
 pub struct Camera {
     origin: Point3,

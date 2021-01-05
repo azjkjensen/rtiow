@@ -1,4 +1,4 @@
-use crate::util::{clamp, random_in_range};
+use super::{clamp, random_in_range};
 use rand::random;
 use std::fmt::Display;
 use std::ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub};

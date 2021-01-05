@@ -1,24 +1,18 @@
 mod camera;
+mod euclidean;
 mod hittable;
-mod hittable_list;
 mod material;
-mod ray;
-mod sphere;
-mod util;
-mod vec3;
+mod object;
 
 use camera::Camera;
-use hittable::HitRecord;
-use hittable_list::HittableList;
+use euclidean::{random_in_range, Color, Point3, Ray, Vec3};
+use hittable::{HitRecord, HittableList};
 use indicatif::ProgressBar;
 use material::Material;
+use object::Sphere;
 use rand::random;
-use ray::Ray;
 use rayon::prelude::*;
-use sphere::Sphere;
 use std::sync::Arc;
-use util::random_in_range;
-use vec3::{Color, Point3, Vec3};
 
 fn ray_color(ray: &Ray, world: &HittableList, depth: u32) -> Color {
     // if we have reached maximum depth, stop collecting light

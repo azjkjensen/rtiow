@@ -1,6 +1,5 @@
+use crate::euclidean::{Color, Ray, Vec3};
 use crate::hittable::HitRecord;
-use crate::ray::Ray;
-use crate::vec3::{Color, Vec3};
 use rand::random;
 
 #[derive(Clone, Copy)]

@@ -1,5 +1,5 @@
+use crate::euclidean::Ray;
 use crate::hittable::{HitRecord, Hittable};
-use crate::ray::Ray;
 use std::collections::VecDeque;
 use std::sync::Arc;
 

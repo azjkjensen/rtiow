@@ -1,6 +1,5 @@
+use crate::euclidean::{Point3, Ray, Vec3};
 use crate::material::Material;
-use crate::ray::Ray;
-use crate::vec3::{Point3, Vec3};
 
 #[derive(Default, Clone, Copy)]
 pub struct HitRecord {
