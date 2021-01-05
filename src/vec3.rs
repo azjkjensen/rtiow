@@ -7,17 +7,13 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, 
 pub type Point3 = Vec3;
 pub type Color = Vec3;
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Default, Debug, PartialEq, Clone, Copy)]
 pub struct Vec3 {
     e: [f64; 3],
 }
 
 impl Vec3 {
-    pub fn new() -> Self {
-        Vec3 { e: [0.0, 0.0, 0.0] }
-    }
-
-    pub fn new_init(e0: f64, e1: f64, e2: f64) -> Self {
+    pub fn new(e0: f64, e1: f64, e2: f64) -> Self {
         Vec3 { e: [e0, e1, e2] }
     }
 
@@ -55,7 +51,7 @@ impl Vec3 {
     pub fn random_in_unit_disk() -> Vec3 {
         let mut v: Self;
         loop {
-            v = Self::new_init(random_in_range(-1.0, 1.0), random_in_range(-1.0, 1.0), 0.0);
+            v = Self::new(random_in_range(-1.0, 1.0), random_in_range(-1.0, 1.0), 0.0);
             if v.len_squared() < 1.0 {
                 break;
             }
@@ -88,7 +84,7 @@ impl Vec3 {
     }
 
     pub fn cross(&self, other: &Vec3) -> Vec3 {
-        Vec3::new_init(
+        Vec3::new(
             self.e[1] * other.e[2] - self.e[2] * other.e[1],
             self.e[2] * other.e[0] - self.e[0] * other.e[2],
             self.e[0] * other.e[1] - self.e[1] * other.e[0],
@@ -256,24 +252,24 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_new() {
-        let v = Vec3::new();
+    fn test_default() {
+        let v = Vec3::default();
         assert_eq!(v, Vec3 { e: [0.0, 0.0, 0.0] });
     }
 
     #[test]
-    fn test_new_init() {
-        let v = Vec3::new_init(1.0, 2.0, 3.0);
+    fn test_new() {
+        let v = Vec3::new(1.0, 2.0, 3.0);
         assert_eq!(v, Vec3 { e: [1.0, 2.0, 3.0] });
-        let v = Color::new_init(1.0, 2.0, 3.0);
+        let v = Color::new(1.0, 2.0, 3.0);
         assert_eq!(v, Vec3 { e: [1.0, 2.0, 3.0] });
-        let v = Point3::new_init(1.0, 2.0, 3.0);
+        let v = Point3::new(1.0, 2.0, 3.0);
         assert_eq!(v, Vec3 { e: [1.0, 2.0, 3.0] });
     }
 
     #[test]
     fn test_accessors() {
-        let v = Vec3::new_init(1.0, 2.0, 3.0);
+        let v = Vec3::new(1.0, 2.0, 3.0);
         assert_eq!(v.x(), 1.0);
         assert_eq!(v.y(), 2.0);
         assert_eq!(v.z(), 3.0);
@@ -281,13 +277,13 @@ mod tests {
 
     #[test]
     fn test_mul() {
-        let v = Vec3::new_init(1.0, 2.0, 3.0);
+        let v = Vec3::new(1.0, 2.0, 3.0);
         assert_eq!(v * 3.0, Vec3 { e: [3.0, 6.0, 9.0] });
     }
 
     #[test]
     fn test_mul_assign() {
-        let mut v = Vec3::new_init(1.0, 2.0, 3.0);
+        let mut v = Vec3::new(1.0, 2.0, 3.0);
         v *= 12.0;
         assert_eq!(
             v,
@@ -299,23 +295,23 @@ mod tests {
 
     #[test]
     fn test_add() {
-        let v = Vec3::new_init(1.0, 2.0, 3.0);
-        let v2 = Vec3::new_init(2.0, 3.0, 4.0);
+        let v = Vec3::new(1.0, 2.0, 3.0);
+        let v2 = Vec3::new(2.0, 3.0, 4.0);
         assert_eq!(v + v2, Vec3 { e: [3.0, 5.0, 7.0] });
     }
 
     #[test]
     fn test_add_assign() {
-        let mut v = Vec3::new_init(1.0, 2.0, 3.0);
-        let v2 = Vec3::new_init(2.0, 3.0, 4.0);
+        let mut v = Vec3::new(1.0, 2.0, 3.0);
+        let v2 = Vec3::new(2.0, 3.0, 4.0);
         v += v2;
         assert_eq!(v, Vec3 { e: [3.0, 5.0, 7.0] });
     }
 
     #[test]
     fn test_sub() {
-        let v = Vec3::new_init(1.0, 2.0, 3.0);
-        let v2 = Vec3::new_init(2.0, 3.0, 2.0);
+        let v = Vec3::new(1.0, 2.0, 3.0);
+        let v2 = Vec3::new(2.0, 3.0, 2.0);
         assert_eq!(
             v - v2,
             Vec3 {
@@ -326,20 +322,20 @@ mod tests {
 
     #[test]
     fn test_div() {
-        let v = Vec3::new_init(1.0, 2.0, 3.0);
+        let v = Vec3::new(1.0, 2.0, 3.0);
         assert_eq!(v / 2.0, Vec3 { e: [0.5, 1.0, 1.5] });
     }
 
     #[test]
     fn test_div_assign() {
-        let mut v = Vec3::new_init(1.0, 2.0, 3.0);
+        let mut v = Vec3::new(1.0, 2.0, 3.0);
         v /= 2.0;
         assert_eq!(v, Vec3 { e: [0.5, 1.0, 1.5] });
     }
 
     #[test]
     fn test_neg() {
-        let v = Vec3::new_init(1.0, 2.0, 3.0);
+        let v = Vec3::new(1.0, 2.0, 3.0);
         assert_eq!(
             -v,
             Vec3 {
@@ -350,7 +346,7 @@ mod tests {
 
     #[test]
     fn test_index() {
-        let v = Vec3::new_init(1.0, 2.0, 3.0);
+        let v = Vec3::new(1.0, 2.0, 3.0);
         assert_eq!(v[0], 1.0);
         assert_eq!(v[1], 2.0);
         assert_eq!(v[2], 3.0);
@@ -358,7 +354,7 @@ mod tests {
 
     #[test]
     fn test_index_mut() {
-        let mut v = Vec3::new_init(1.0, 2.0, 3.0);
+        let mut v = Vec3::new(1.0, 2.0, 3.0);
         v[2] = 42.0;
         assert_eq!(v[0], 1.0);
         assert_eq!(v[1], 2.0);
@@ -367,42 +363,39 @@ mod tests {
 
     #[test]
     fn test_length_squared() {
-        let v = Vec3::new_init(1.0, 2.0, 3.0);
+        let v = Vec3::new(1.0, 2.0, 3.0);
         assert_eq!(v.len_squared(), 1.0 + 4.0 + 9.0);
     }
 
     #[test]
     fn test_length() {
-        let v = Vec3::new_init(1.0, 2.0, 3.0);
+        let v = Vec3::new(1.0, 2.0, 3.0);
         assert_eq!(v.len(), 14.0f64.sqrt());
     }
 
     #[test]
     fn test_dot() {
-        let v = Vec3::new_init(1.0, 2.0, 3.0);
-        let v2 = Vec3::new_init(2.0, 2.0, 2.0);
+        let v = Vec3::new(1.0, 2.0, 3.0);
+        let v2 = Vec3::new(2.0, 2.0, 2.0);
         assert_eq!(v.dot(&v2), 2.0 + 4.0 + 6.0);
     }
 
     #[test]
     fn test_cross() {
-        let v = Vec3::new_init(1.0, 2.0, 3.0);
-        let v2 = Vec3::new_init(3.0, 2.0, 8.0);
-        assert_eq!(
-            v.cross(&v2),
-            Vec3::new_init(16.0 - 6.0, 9.0 - 8.0, 2.0 - 6.0)
-        );
+        let v = Vec3::new(1.0, 2.0, 3.0);
+        let v2 = Vec3::new(3.0, 2.0, 8.0);
+        assert_eq!(v.cross(&v2), Vec3::new(16.0 - 6.0, 9.0 - 8.0, 2.0 - 6.0));
     }
 
     #[test]
     fn test_unit_vector() {
-        let v = Vec3::new_init(0.0, 3.0, 4.0);
-        assert_eq!(v.unit_vector(), Vec3::new_init(0.0, 3.0 / 5.0, 4.0 / 5.0));
+        let v = Vec3::new(0.0, 3.0, 4.0);
+        assert_eq!(v.unit_vector(), Vec3::new(0.0, 3.0 / 5.0, 4.0 / 5.0));
     }
 
     #[test]
     fn test_as_color_str() {
-        let v = Vec3::new_init(1.0, 1.0, 1.0);
-        assert_eq!(v.as_color_str(), "255.999 255.999 255.999\n");
+        let v = Vec3::new(1.0, 1.0, 1.0);
+        assert_eq!(v.as_multisample_color_str(1), "255 255 255\n");
     }
 }

@@ -3,6 +3,7 @@ use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec3::{Color, Point3};
 
+#[derive(Default)]
 pub struct Sphere {
     center: Point3,
     radius: f64,
@@ -10,17 +11,7 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    pub fn new() -> Self {
-        Self {
-            center: Point3::new(),
-            radius: 0.0,
-            material: Material::Lambertian {
-                albedo: Color::new(),
-            },
-        }
-    }
-
-    pub fn new_init(center: Point3, radius: f64, material: Material) -> Self {
+    pub fn new(center: Point3, radius: f64, material: Material) -> Self {
         Self {
             center,
             radius,

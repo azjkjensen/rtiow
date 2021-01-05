@@ -3,17 +3,12 @@ use crate::ray::Ray;
 use std::collections::VecDeque;
 use std::sync::Arc;
 
+#[derive(Default)]
 pub struct HittableList {
     objects: VecDeque<Arc<dyn Hittable + Sync + Send>>,
 }
 
 impl HittableList {
-    pub fn new() -> Self {
-        Self {
-            objects: VecDeque::new(),
-        }
-    }
-
     pub fn new_init(object: Arc<dyn Hittable + Sync + Send>) -> HittableList {
         let mut objects = VecDeque::new();
         objects.push_back(object);
@@ -29,7 +24,7 @@ impl HittableList {
     }
 
     pub fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, record: &mut HitRecord) -> bool {
-        let mut temp_record = HitRecord::new();
+        let mut temp_record = HitRecord::default();
         let mut hit_anything = false;
         let mut closest_so_far = t_max;
 

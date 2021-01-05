@@ -11,6 +11,12 @@ pub enum Material {
     Dialectric { ir: f64 },
 }
 
+impl Default for Material {
+    fn default() -> Self {
+        Self::NoMaterial
+    }
+}
+
 impl Material {
     pub fn scatter(
         &self,
@@ -26,20 +32,19 @@ impl Material {
                     // degenerate scatter direction
                     scatter_direction = record.normal;
                 }
-                *scattered = Ray::new_init(record.p, scatter_direction);
+                *scattered = Ray::new(record.p, scatter_direction);
                 *attenuation = *albedo;
                 true
             }
             Self::Metal { albedo, fuzz_in: _ } => {
                 let reflected = ray_in.dir.unit_vector().reflect(&record.normal);
                 let fuzz = self.fuzz().unwrap_or(0.0);
-                *scattered =
-                    Ray::new_init(record.p, reflected + Vec3::random_in_unit_sphere() * fuzz);
+                *scattered = Ray::new(record.p, reflected + Vec3::random_in_unit_sphere() * fuzz);
                 *attenuation = *albedo;
                 scattered.dir.dot(&record.normal) > 0.0
             }
             Self::Dialectric { ir } => {
-                *attenuation = Color::new_init(1.0, 1.0, 1.0);
+                *attenuation = Color::new(1.0, 1.0, 1.0);
                 *scattered = {
                     let refraction_ratio = if record.front_face { 1.0 / ir } else { *ir };
                     let unit_direction = ray_in.dir.unit_vector();
@@ -54,7 +59,7 @@ impl Material {
                     } else {
                         unit_direction.refract(&record.normal, refraction_ratio)
                     };
-                    Ray::new_init(record.p, direction)
+                    Ray::new(record.p, direction)
                 };
                 true
             }
