@@ -17,78 +17,125 @@ use ray::Ray;
 use rayon::prelude::*;
 use sphere::Sphere;
 use std::sync::Arc;
+use util::random_in_range;
 use vec3::{Color, Point3, Vec3};
 
 fn ray_color(ray: &Ray, world: &HittableList, depth: u32) -> Color {
     // if we have reached maximum depth, stop collecting light
-    if depth <= 0 {
+    if depth == 0 {
         return Color::new_init(0.0, 0.0, 0.0);
     }
     let mut record = HitRecord::new();
-    let res = if world.hit(&ray, 0.001, f64::INFINITY, &mut record) {
+    if world.hit(&ray, 0.001, f64::INFINITY, &mut record) {
         let mut scattered = Ray::new();
         let mut attenuation = Color::new();
-        return if record
+        if record
             .material
             .scatter(ray, &record, &mut attenuation, &mut scattered)
         {
             ray_color(&scattered, &world, depth - 1) * attenuation
         } else {
             Color::new_init(0.0, 0.0, 0.0)
-        };
+        }
     } else {
         let unit_direction = ray.dir.unit_vector();
         let t = 0.5 * (unit_direction.y() + 1.0);
         Color::new_init(1.0, 1.0, 1.0) * (1.0 - t) + Color::new_init(0.5, 0.7, 1.0) * t
+    }
+}
+
+fn random_scene() -> HittableList {
+    let mut world = HittableList::new();
+
+    let ground_material = Material::Lambertian {
+        albedo: Color::new_init(0.5, 0.5, 0.5),
     };
-    res
+    world.add(Arc::new(Sphere::new_init(
+        Point3::new_init(0.0, -1000.0, 0.0),
+        1000.0,
+        ground_material,
+    )));
+
+    for a in (0..22).map(|v| v - 11) {
+        for b in (0..22).map(|v| v - 11) {
+            let material_choice: f64 = random();
+            let center = Point3::new_init(
+                a as f64 + 0.9 * random::<f64>(),
+                0.2,
+                b as f64 + 0.9 * random::<f64>(),
+            );
+
+            if (center - Point3::new_init(4.0, 0.2, 0.0)).len() > 0.9 {
+                let sphere_material = if material_choice < 0.8 {
+                    let albedo = Color::random() * Color::random();
+                    Material::Lambertian { albedo }
+                } else if material_choice < 0.95 {
+                    let albedo = Color::random_in_range(0.5, 1.0);
+                    let fuzz = random_in_range(0.0, 0.5);
+                    Material::Metal {
+                        albedo,
+                        fuzz_in: fuzz,
+                    }
+                } else {
+                    Material::Dialectric { ir: 1.5 }
+                };
+                world.add(Arc::new(Sphere::new_init(center, 0.2, sphere_material)));
+            }
+        }
+    }
+
+    let material1 = Material::Dialectric { ir: 1.5 };
+    let material2 = Material::Lambertian {
+        albedo: Color::new_init(0.4, 0.2, 0.1),
+    };
+    let material3 = Material::Metal {
+        albedo: Color::new_init(0.7, 0.6, 0.5),
+        fuzz_in: 0.0,
+    };
+    world.add(Arc::new(Sphere::new_init(
+        Point3::new_init(0.0, 1.0, 0.0),
+        1.0,
+        material1,
+    )));
+    world.add(Arc::new(Sphere::new_init(
+        Point3::new_init(-4.0, 1.0, 0.0),
+        1.0,
+        material2,
+    )));
+    world.add(Arc::new(Sphere::new_init(
+        Point3::new_init(4.0, 1.0, 0.0),
+        1.0,
+        material3,
+    )));
+    world
 }
 
 fn main() {
     // image
     let aspect_ratio = 16.0 / 9.0;
-    let image_width: u64 = 400;
+    let image_width: u64 = 1200;
     let image_height: u64 = (image_width as f64 / aspect_ratio) as u64;
-    let samples_per_pixel = 100;
+    let samples_per_pixel = 500;
     let max_bounce_depth = 50;
 
     // world
-    let mut world = HittableList::new();
-    let material_ground = Material::Lambertian {
-        albedo: Color::new_init(0.8, 0.8, 0.0),
-    };
-    let material_center = Material::Lambertian {
-        albedo: Color::new_init(0.7, 0.3, 0.3),
-    };
-    let material_left = Material::Metal {
-        albedo: Color::new_init(0.8, 0.8, 0.8),
-    };
-    let material_right = Material::Metal {
-        albedo: Color::new_init(0.8, 0.6, 0.2),
-    };
-    world.add(Arc::new(Sphere::new_init(
-        Point3::new_init(0.0, -100.5, -1.0),
-        100.0,
-        material_ground,
-    )));
-    world.add(Arc::new(Sphere::new_init(
-        Point3::new_init(0.0, 0.0, -1.0),
-        0.5,
-        material_center,
-    )));
-    world.add(Arc::new(Sphere::new_init(
-        Point3::new_init(-1.0, 0.0, -1.0),
-        0.5,
-        material_left,
-    )));
-    world.add(Arc::new(Sphere::new_init(
-        Point3::new_init(1.0, 0.0, -1.0),
-        0.5,
-        material_right,
-    )));
+    let mut world = random_scene();
 
     // camera
-    let cam = Camera::new();
+    let look_from = Point3::new_init(13.0, 2.0, 3.0);
+    let look_at = Point3::new_init(0.0, 0.0, 0.0);
+    let view_up = Vec3::new_init(0.0, 1.0, 0.0);
+    let dist_to_focus = 10.0;
+    let aperture = 0.1;
+    let cam = Camera::new(
+        &look_from,
+        &look_at,
+        &view_up,
+        20.0,
+        aspect_ratio,
+        aperture,
+        dist_to_focus,
+    );
 
     // render
     let progress_bar = ProgressBar::new(image_height);
@@ -104,7 +151,7 @@ fn main() {
                     let ray = cam.get_ray(u, v);
                     ray_color(&ray, &world, max_bounce_depth)
                 })
-                .reduce(|| Color::new(), |acc, c| acc + c);
+                .reduce(Color::new, |acc, c| acc + c);
             print!(
                 "{}",
                 pixel_color.as_multisample_color_str(samples_per_pixel)

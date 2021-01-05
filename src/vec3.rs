@@ -52,6 +52,17 @@ impl Vec3 {
         Self::random_in_unit_sphere().unit_vector()
     }
 
+    pub fn random_in_unit_disk() -> Vec3 {
+        let mut v: Self;
+        loop {
+            v = Self::new_init(random_in_range(-1.0, 1.0), random_in_range(-1.0, 1.0), 0.0);
+            if v.len_squared() < 1.0 {
+                break;
+            }
+        }
+        v
+    }
+
     pub fn x(&self) -> f64 {
         self.e[0]
     }
@@ -95,6 +106,13 @@ impl Vec3 {
 
     pub fn reflect(&self, n: &Vec3) -> Vec3 {
         *self - *n * self.dot(n) * 2.0
+    }
+
+    pub fn refract(&self, normal: &Vec3, eta_ratio: f64) -> Vec3 {
+        let cos_theta = (-*self).dot(normal).min(1.0);
+        let out_perp = (*self + *normal * cos_theta) * eta_ratio;
+        let out_par = *normal * -((1.0 - out_perp.len_squared()).abs() as f64).sqrt();
+        out_perp + out_par
     }
 
     pub fn as_multisample_color_str(&self, samples_per_pixel: u32) -> String {

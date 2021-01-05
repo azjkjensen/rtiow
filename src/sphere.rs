@@ -52,7 +52,7 @@ impl Hittable for Sphere {
             record.p = ray.at(record.t);
             let outward_normal = (record.p - self.center) / self.radius;
             record.set_face_normal(&ray, &outward_normal);
-            record.material = self.material.clone();
+            record.material = self.material;
             true
         }
     }

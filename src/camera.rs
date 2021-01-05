@@ -1,4 +1,5 @@
 use crate::ray::Ray;
+use crate::util::degrees_to_rads;
 use crate::vec3::{Point3, Vec3};
 
 pub struct Camera {
@@ -6,33 +7,56 @@ pub struct Camera {
     lower_left_corner: Point3,
     horizontal: Vec3,
     vertical: Vec3,
+    u: Vec3,
+    v: Vec3,
+    w: Vec3,
+    lens_radius: f64,
 }
 
 impl Camera {
-    pub fn new() -> Self {
-        let aspect_ratio = 16.0 / 9.0;
-        let viewport_height = 2.0;
-        let viewport_width = aspect_ratio * viewport_height;
-        let focal_length = 1.0;
+    pub fn new(
+        look_from: &Point3,
+        look_at: &Point3,
+        view_up: &Vec3,
+        vertical_fov: f64,
+        aspect_ratio: f64,
+        aperture: f64,
+        focus_dist: f64,
+    ) -> Self {
+        let theta = degrees_to_rads(vertical_fov);
+        let h = (theta / 2.0).tan();
 
-        let origin = Point3::new();
-        let horizontal = Vec3::new_init(viewport_width, 0.0, 0.0);
-        let vertical = Vec3::new_init(0.0, viewport_height, 0.0);
-        let lower_left_corner =
-            origin - horizontal / 2.0 - vertical / 2.0 - Vec3::new_init(0.0, 0.0, focal_length);
+        let viewport_height = 2.0 * h;
+        let viewport_width = aspect_ratio * viewport_height;
+
+        let w = (*look_from - *look_at).unit_vector();
+        let u = view_up.cross(&w).unit_vector();
+        let v = w.cross(&u);
+
+        let origin = look_from;
+        let horizontal = u * viewport_width * focus_dist;
+        let vertical = v * viewport_height * focus_dist;
+        let lower_left_corner = *origin - horizontal / 2.0 - vertical / 2.0 - w * focus_dist;
+        let lens_radius = aperture / 2.0;
         Self {
-            origin,
+            origin: *origin,
             lower_left_corner,
             horizontal,
             vertical,
+            u,
+            v,
+            w,
+            lens_radius,
         }
     }
 
     #[inline(always)]
-    pub fn get_ray(&self, u: f64, v: f64) -> Ray {
+    pub fn get_ray(&self, s: f64, t: f64) -> Ray {
+        let rd = Vec3::random_in_unit_disk() * self.lens_radius;
+        let offset = self.u * rd.x() + self.v * rd.y();
         Ray::new_init(
-            self.origin,
-            self.lower_left_corner + self.horizontal * u + self.vertical * v - self.origin,
+            self.origin + offset,
+            self.lower_left_corner + self.horizontal * s + self.vertical * t - self.origin - offset,
         )
     }
 }
